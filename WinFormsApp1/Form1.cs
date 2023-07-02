@@ -186,7 +186,6 @@ namespace DeikstraAlgorithm
                 (int nodeIndex1, int nodeIndex2) = FindClosestEdge(pX, pY);
                 if (nodeIndex != -1 && nodeIndex1 == -1 && nodeIndex2 == -1)
                 {
-                    // TODO: При удалении вершины визуально скрывает одно/несколько соединений в графе, в файле соединения остаются
                     RemoveNodePosition(nodeIndex);
                     RemoveNodeName(nodeIndex);
                     RemoveNodeConnections(nodeIndex);

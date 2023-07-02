@@ -1,7 +1,7 @@
 using System.Windows.Forms;
 
 
-namespace WinFormsApp1
+namespace DeikstraAlgorithm
 {
     static class Program
     {

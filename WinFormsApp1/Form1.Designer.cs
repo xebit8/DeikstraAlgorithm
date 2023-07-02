@@ -1,4 +1,4 @@
-﻿namespace WinFormsApp1
+﻿namespace DeikstraAlgorithm
 {
     partial class Form1
     {

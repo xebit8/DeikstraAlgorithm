@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 
-namespace WinFormsApp1
+namespace DeikstraAlgorithm
 {
     public partial class Form1 : Form
     {

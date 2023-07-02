@@ -75,6 +75,7 @@ namespace DeikstraAlgorithm
                 AddEdge(ribs[ribNodes], node1, node2);
             }
         }
+        // TODO: Полностью переделать метод. Если присоединить последний элемент массива вершин перед первой вершиной в графе, то метод не работает.
         public (double, string) DeikstraAlgorithm(int n1, int n2)
         {
             GraphFiller();

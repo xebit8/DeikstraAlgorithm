@@ -1,6 +1,3 @@
-using System.Windows.Forms;
-
-
 namespace DeikstraAlgorithm
 {
     static class Program
@@ -58,7 +55,7 @@ namespace DeikstraAlgorithm
             // ID_вершины:Вес_Ребра,ID_Вершины:Вес_Ребра,...
             for (int i = 0; i < n; i++)
             {
-                if (lines[i] == "-") continue;
+                if (lines[i] == "-" || lines[i] == "X") continue;
                 int ribNode1_ID = i;
                 string[] valueAndNode = lines[i].Split(',');
                 for (int j = 0; j < valueAndNode.Length; j++)
@@ -80,7 +77,6 @@ namespace DeikstraAlgorithm
         {
             GraphFiller();
             List<string> node_path = new List<string>();
-            double distance = 0;
             Node active_node = nodes_list[0];
             Dictionary<Node, List<Node>> node_conns = new Dictionary<Node, List<Node>>();
             for (int i = n1; i < n2 + 1; i++)

@@ -1,18 +1,15 @@
-using System;
-using System.Diagnostics;
-using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
-using System.Reflection;
-using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
+
 
 namespace DeikstraAlgorithm
 {
     public partial class Form1 : Form
     {
-        List<(int,int)> vertices = new List<(int, int)>();
-        Dictionary<(int, int), (int, int)> ribs = new Dictionary<(int, int), (int, int)>();
+        public Dictionary<(int, int), (int, int)> ribs = new Dictionary<(int, int), (int, int)>();
+        public Dictionary<int, (int, int)> nodesPos = new Dictionary<int, (int, int)>();
+        public Dictionary<int, string> nodesNames = new Dictionary<int, string>();
+        public Dictionary<int, List<(int, int)>> nodesConns = new Dictionary<int, List<(int, int)>>();
         // Проверка, нажата ли кнопка
         bool AddButtonClicked = false;
         bool RemoveButtonClicked = false;
@@ -32,46 +29,25 @@ namespace DeikstraAlgorithm
         }
         private void GraphFromFiles()
         {
-            if (!Directory.Exists("Graph Data"))
-            {
-                Directory.CreateDirectory("Graph Data");
-            }
             Bitmap b0 = new Bitmap(Canvas.Width, Canvas.Height);
             using (Graphics g = Graphics.FromImage(b0))
             {
                 g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit;
-                vertices = new List<(int, int)>();
                 ribs = new Dictionary<(int, int), (int, int)>();
-                string[] names = new string[] { };
                 try
                 {
-                    names = File.ReadAllLines("Graph Data\\names.txt");
-                    int n = names.Length;
-                    (int, int)[] coords = new (int, int)[n]; // Для рёбер
-                    int cc = 0;
-                    using (StreamReader sr = new StreamReader("Graph Data\\coordinates.txt"))
-                    {
-                        while (sr.EndOfStream != true)
-                        {
-                            string[] line = sr.ReadLine().Split(' ');
-                            (int, int) p = (Convert.ToInt32(line[0])-25, Convert.ToInt32(line[1])-25);
-                            coords[cc] = p;
-                            vertices.Add(p);
-                            cc++;
-                        }
-                    }
-                    if (n >= 2)
+                    if (nodesPos.Count >= 2)
                     {
                         try
                         {
-                            DrawEdge(g, coords, n);
+                            DrawEdges(g);
                         }
                         catch (IndexOutOfRangeException)
                         {
                             ;
                         }
                     }
-                    DrawNode(g, coords, names);
+                    DrawNodes(g);
                 }
                 catch (FileNotFoundException)
                 {
@@ -81,7 +57,7 @@ namespace DeikstraAlgorithm
                 Canvas.Refresh();
             }
         }
-        private void DrawNode(Graphics g, (int, int)[] coords, string[] names)
+        private void DrawNodes(Graphics g)
         {
             Bitmap b1 = new Bitmap(50, 50);
             using (var g1 = Graphics.FromImage(b1))
@@ -96,14 +72,14 @@ namespace DeikstraAlgorithm
                     g1.FillEllipse(Brushes.LightBlue, 0 + 3, 0 + 3, 50 - 7, 50 - 7);
                 }
             }
-            for (int i = 0; i < coords.Length; i++)
+            foreach(int id in nodesPos.Keys)
             {
-                (int node_x, int node_y) = coords[i];
+                (int node_x, int node_y) = nodesPos[id];
                 g.DrawImage(b1, new Point(node_x, node_y));
-                DrawString(g, names[i], node_x + 16, node_y + 16);
+                DrawStrings(g, nodesNames[id], node_x + 16, node_y + 16);
             }
         }
-        private void DrawEdge(Graphics g, (int, int)[] coords, int n)
+        private void DrawEdges(Graphics g)
         {
             Color color;
             if (NightModeOn == true)
@@ -111,34 +87,28 @@ namespace DeikstraAlgorithm
                 color = Color.DarkSlateGray;
             }
             else color = Color.LightBlue;
-            string[] lines = File.ReadAllLines("Graph Data\\connections.txt");
+            foreach (int id in nodesConns.Keys)
             {
-                for (int i = 0; i < n; i++)
+                foreach ((int, int) values in nodesConns[id])
                 {
-                    if (lines[i] == "-") continue;
-                    int ribNode1_ID = i;
-                    string[] valuesAndNodes = lines[i].Split(',');
-                    for (int j = 0; j < valuesAndNodes.Length; j++)
-                    {
-                        int ribNode2_ID = Convert.ToInt32(valuesAndNodes[j].Split(':')[0]);
-                        int ribValue = Convert.ToInt32(valuesAndNodes[j].Split(':')[1]);
-                        (int x1, int y1) = coords[ribNode1_ID];
-                        (int x2, int y2) = coords[ribNode2_ID];
-                        x1 += 25;
-                        x2 += 25;
-                        y1 += 25;
-                        y2 += 25;
-                        g.DrawLine(new Pen(color, 3), new Point(x1, y1), new Point(x2, y2));
-                        // координаты центра линии, но с отступом вверх для создания надписи
-                        int label_x = ((x1 + x2) / 2) - 4;
-                        int label_y = ((y1 + y2) / 2) - 9;
-                        ribs.Add((ribNode1_ID, ribNode2_ID), (label_x, label_y));
-                        DrawString(g, ribValue.ToString(), label_x, label_y);
-                    }
+                    int ribNode1 = id;
+                    (int ribNode2, int ribValue) = values;
+                    (int x1, int y1) = nodesPos[ribNode1];
+                    (int x2, int y2) = nodesPos[ribNode2];
+                    x1 += 25;
+                    x2 += 25;
+                    y1 += 25;
+                    y2 += 25;
+                    g.DrawLine(new Pen(color, 3), new Point(x1, y1), new Point(x2, y2));
+                    // координаты центра линии, но с отступом вверх для создания надписи
+                    int label_x = ((x1 + x2) / 2) - 4;
+                    int label_y = ((y1 + y2) / 2) - 9;
+                    ribs.Add((ribNode1, ribNode2), (label_x, label_y));
+                    DrawStrings(g, ribValue.ToString(), label_x, label_y);
                 }
             }
         }
-        private void DrawString(Graphics g, string text, int x, int y)
+        private void DrawStrings(Graphics g, string text, int x, int y)
         {
             Color textcolor;
             if (NightModeOn == true)
@@ -165,20 +135,10 @@ namespace DeikstraAlgorithm
             if (AddButtonClicked == true)
             {
                 AddNodeForm();
-                if (File.Exists("Graph Data\\names.txt"))
-                {
-                    // Заносим координаты новой вершины в файл
-                    using (StreamWriter sw = new StreamWriter("Graph Data\\coordinates.txt", true))
-                    {
-                        sw.WriteLine($"{pX} {pY}");
-                    }
-                    // Объявляем пустой контейнер для связей с вершиной
-                    using (StreamWriter sw = new StreamWriter("Graph Data\\connections.txt", true))
-                    {
-                        sw.WriteLine('-');
-                    }
-                    GraphFromFiles();
-                }
+                int lastNodeID = nodesNames.Last().Key;
+                nodesPos.Add(lastNodeID, (pX-25, pY-25));
+                nodesConns.Add(lastNodeID, new List<(int, int)>());
+                GraphFromFiles();
             }
             else if (RemoveButtonClicked == true)
             {
@@ -269,12 +229,17 @@ namespace DeikstraAlgorithm
         }
         private void AddNodeForm()
         {
-            Form2 NodeNameForm = new Form2();
-            NodeNameForm.ShowDialog();
+            using (Form2 form2 = new Form2(nodesNames))
+            {
+                if (form2.ShowDialog() == DialogResult.OK)
+                {
+                    nodesNames = form2.names;
+                }
+            }
         }
         private void ChangeNodeForm(int node)
         {
-            Form2 NodeNameForm = new Form2(node);
+            Form2 NodeNameForm = new Form2(nodesNames, node);
             NodeNameForm.ShowDialog();
         }
         private void ConnectNodesForm()
@@ -442,86 +407,43 @@ namespace DeikstraAlgorithm
         }
         private void RemoveNodePosition(int index)
         {
-            // Удаление координат
-            if (File.Exists("Graph Data\\names.txt"))
+            foreach (int id in nodesPos.Keys)
             {
-                string coords_path = @"Graph Data\coordinates.txt";
-                string[] coords = File.ReadAllLines(coords_path);
-                File.Delete(@"Graph Data\coordinates.txt");
-                if (coords.Length != 1)
+                if (id == index)
                 {
-                    using (StreamWriter sw = new StreamWriter(coords_path, false))
-                    {
-                        for (int i = 0; i < coords.Length; i++)
-                        {
-                            if (i == index)
-                            {
-                                continue;
-                            }
-                            sw.WriteLine(coords[i]);
-                        }
-                    }
+                    nodesPos.Remove(id);
                 }
-            }
-            
+            }      
         }
         private void RemoveNodeName(int index)
         {
-            // Удаление имени
-            string names_path = "Graph Data\\names.txt";
-            string[] names = File.ReadAllLines(names_path);
-            File.Delete("Graph Data\\names.txt");
-            if (names.Length != 1)
+            foreach (int id in nodesNames.Keys)
             {
-                using (StreamWriter sw = new StreamWriter(names_path, false))
+                if (id == index)
                 {
-                    for (int i = 0; i < names.Length; i++)
-                    {
-                        if (i == index)
-                        {
-                            continue;
-                        }
-                        sw.WriteLine(names[i]);
-                    }
+                    nodesPos.Remove(id);
                 }
             }
         }
         private void RemoveNodeConnections(int index)
         {
             // Удаление связей с другими вершинами
-            string conns_path = "Graph Data\\connections.txt";
-            string[] lines = File.ReadAllLines(conns_path);
-            File.Delete("Graph Data\\connections.txt");
-            if (lines.Length != 1)
+            foreach (int nodeID_1 in nodesConns.Keys)
             {
-                using (StreamWriter sw = new StreamWriter(conns_path, false))
+                string[] valuesAndNodes = lines[i].Split(',');
+                string newVAN = "";
+                for (int j = 0; j < valuesAndNodes.Length; j++)
                 {
-                    for (int i = 0; i < lines.Length; i++)
+                    int ribNode2_ID = Convert.ToInt32(valuesAndNodes[j].Split(':')[0]);
+                    if (ribNode2_ID == index)
                     {
-                        if (i == index)
-                        {
-                            continue;
-                        }
-                        if (lines[i] == "-")
-                        {
-                            sw.WriteLine("-");
-                            continue;
-                        }
-                        string[] valuesAndNodes = lines[i].Split(',');
-                        string newVAN = "";
-                        for (int j = 0; j < valuesAndNodes.Length; j++)
-                        {
-                            int ribNode2_ID = Convert.ToInt32(valuesAndNodes[j].Split(':')[0]);
-                            if (ribNode2_ID == index)
-                            {
-                                continue;
-                            }
-                            if (newVAN == "") newVAN += valuesAndNodes[j];
-                            else newVAN += ',' + valuesAndNodes[j];
-                        }
-                        if (newVAN == "") newVAN = "-";
-                        sw.WriteLine(newVAN);
+                        continue;
                     }
+                    if (newVAN == "") newVAN += valuesAndNodes[j];
+                    else newVAN += ',' + valuesAndNodes[j];
+                }
+                if (newVAN == "") newVAN = "-";
+                    sw.WriteLine(newVAN);
                 }
             }
         }
@@ -546,6 +468,11 @@ namespace DeikstraAlgorithm
                         if (lines[i] == "-")
                         {
                             sw.WriteLine("-");
+                            continue;
+                        }
+                        if (lines[i] == "X")
+                        {
+                            sw.WriteLine("X");
                             continue;
                         }
                         string newVAN = "";

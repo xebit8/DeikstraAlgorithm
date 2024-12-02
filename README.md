@@ -1,4 +1,5 @@
-## Shortest Path Calculation Program for a Terrain Graph Based on Dijkstra's Algorithm
+## Deikstra's Algorithm 
+### Shortest path calculation program for a terrain graph based on Dijkstra's algorithm on Python with user-friendly GUI. 
 This project was chosen as a coursework assignment. 
 
 Below are screenshots of the program's interface.
